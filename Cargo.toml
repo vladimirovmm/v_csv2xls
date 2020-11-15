@@ -1,0 +1,12 @@
+[package]
+name = "v_csv2xls"
+version = "0.1.0"
+authors = ["VMM <vladimirov.m.m@ya.ru>"]
+edition = "2018"
+
+[dependencies]
+csv = "*"
+xlsxwriter = "*"
+tar = "*"
+flate2 = "*"
+zip = "*"
