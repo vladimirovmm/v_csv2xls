@@ -9,7 +9,7 @@ use std::env::args;
 
 fn main() {
     let params:Vec<String> = env::args().collect();
-    println!("{:?}", params);
+
     if params.len() != 4 { return ;}
     let from = params.get(1).unwrap();
     let to = params.get(2).unwrap();
