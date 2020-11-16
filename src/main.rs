@@ -1,21 +1,21 @@
 use std::env;
-use std::process::Command;
+use std::process::{Command, exit};
 
 fn main() {
     let params:Vec<String> = env::args().collect();
 
-    if params.len() != 4 { return ;}
+    if params.len() != 4 { exit(-1); }
     let from = params.get(1).unwrap();
     let to = params.get(2).unwrap();
     let name = params.get(3).unwrap();
 
     // Открытие CSV файла
     let reader = csv::Reader::from_path(from);
-    if reader.is_err() { return; }
+    if reader.is_err() { exit(-2); }
     let mut reader = reader.unwrap();
     // Заголовоки колонок
     let headers = reader.headers();
-    if headers.is_err() { return; }
+    if headers.is_err() { exit(-3); }
     let headers = headers.unwrap().iter().map(|s|s.to_string()).collect::<Vec<String>>();
 
     // Разбитие на несколько файлов
@@ -27,13 +27,13 @@ fn main() {
         let xls = xlsxwriter::Workbook::new(&name_file);
         let sheet = xls.add_worksheet(None);
         if sheet.is_err() {
-            xls.close().unwrap();
-            return;
+            if xls.close().is_err() { exit(-5); }
+            exit(-4);
         }
         let mut sheet = sheet.unwrap();
         // Заголовоки
         headers.iter().enumerate().for_each(|(num_col,text)|{
-            sheet.write_string(number_row, num_col as u16, text, None).unwrap();
+            if sheet.write_string(number_row, num_col as u16, text, None).is_err() { exit( -6 ); };
         });
         // Обработка строк
         for row in reader.records() {
@@ -41,11 +41,11 @@ fn main() {
             number_row += 1;
 
             row.as_ref().unwrap().iter().enumerate().for_each(|(num_col,text)|{
-                sheet.write_string(number_row, num_col as u16, text, None).unwrap();
+                if sheet.write_string(number_row, num_col as u16, text, None).is_err() { exit(-7); }
             });
 
             if number_row >= 65000{
-                xls.close().unwrap();
+                if xls.close().is_err() { exit(-8); }
                 num_file += 1;
                 continue 'new_file;
             }
@@ -78,9 +78,12 @@ fn main() {
         // });
         // tar.finish();
     }else{
-        std::fs::rename(
+        if std::fs::rename(
             format!("{}/{}_1.xls", to, name),
             format!("{}/{}.xls", to, name)
-        ).unwrap();
+        ).is_err() {
+            exit(-9);
+        }
     }
+    exit(0);
 }
