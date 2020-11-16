@@ -1,11 +1,5 @@
-use std::io::Write;
 use std::env;
-use std::fs::File;
-use flate2::read::GzEncoder;
-use flate2::Compression;
-use std::fmt::format;
 use std::process::Command;
-use std::env::args;
 
 fn main() {
     let params:Vec<String> = env::args().collect();
@@ -30,16 +24,16 @@ fn main() {
         let mut number_row = 0;
         let name_file = to.to_string() + format!("{}_{}.xls", name, num_file).as_str();
         // xls
-        let mut xls = xlsxwriter::Workbook::new(&name_file);
+        let xls = xlsxwriter::Workbook::new(&name_file);
         let sheet = xls.add_worksheet(None);
         if sheet.is_err() {
-            xls.close();
+            xls.close().unwrap();
             return;
         }
         let mut sheet = sheet.unwrap();
         // Заголовоки
         headers.iter().enumerate().for_each(|(num_col,text)|{
-            sheet.write_string(number_row, num_col as u16, text, None);
+            sheet.write_string(number_row, num_col as u16, text, None).unwrap();
         });
         // Обработка строк
         for row in reader.records() {
@@ -47,11 +41,11 @@ fn main() {
             number_row += 1;
 
             row.as_ref().unwrap().iter().enumerate().for_each(|(num_col,text)|{
-                sheet.write_string(number_row, num_col as u16, text, None);
+                sheet.write_string(number_row, num_col as u16, text, None).unwrap();
             });
 
             if number_row >= 65000{
-                xls.close();
+                xls.close().unwrap();
                 num_file += 1;
                 continue 'new_file;
             }
@@ -87,6 +81,6 @@ fn main() {
         std::fs::rename(
             format!("{}/{}_1.xls", to, name),
             format!("{}/{}.xls", to, name)
-        );
+        ).unwrap();
     }
 }
